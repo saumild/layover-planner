@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Layover Planner — Presentation</title>
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f172a;
+      --surface:  #1e293b;
+      --border:   #334155;
+      --indigo:   #6366f1;
+      --indigo-l: #818cf8;
+      --emerald:  #34d399;
+      --amber:    #fbbf24;
+      --rose:     #fb7185;
+      --sky:      #38bdf8;
+      --slate-3:  #cbd5e1;
+      --slate-4:  #94a3b8;
+      --slate-5:  #64748b;
+      --white:    #f8fafc;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--white);
+    }
+
+    /* ─── Slide Container ───────────────────────────────────────────── */
+    #deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 48px 64px;
+      opacity: 0;
+      transform: translateX(60px);
+      transition: opacity .45s ease, transform .45s ease;
+      pointer-events: none;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: all;
+    }
+    .slide.exit {
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+
+    /* ─── Navigation ────────────────────────────────────────────────── */
+    #nav {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--slate-3);
+      padding: 10px 24px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background .2s, color .2s;
+    }
+    .nav-btn:hover { background: var(--border); color: var(--white); }
+    .nav-btn:disabled { opacity: .35; cursor: default; }
+
+    #counter {
+      font-size: 13px;
+      color: var(--slate-5);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    /* ─── Dots ──────────────────────────────────────────────────────── */
+    #dots {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+    .dot.active { background: var(--indigo-l); transform: scale(1.3); }
+
+    /* ─── Shared Components ─────────────────────────────────────────── */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .chip-indigo  { background: rgba(99,102,241,.15); color: var(--indigo-l); border: 1px solid rgba(99,102,241,.3); }
+    .chip-emerald { background: rgba(52,211,153,.12); color: var(--emerald);  border: 1px solid rgba(52,211,153,.3); }
+    .chip-amber   { background: rgba(251,191,36,.12);  color: var(--amber);   border: 1px solid rgba(251,191,36,.3); }
+    .chip-rose    { background: rgba(251,113,133,.12); color: var(--rose);    border: 1px solid rgba(251,113,133,.3); }
+    .chip-sky     { background: rgba(56,189,248,.12);  color: var(--sky);     border: 1px solid rgba(56,189,248,.3); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--indigo-l);
+      margin-bottom: 12px;
+    }
+
+    h1 { font-size: 52px; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+    h2 { font-size: 38px; font-weight: 700; line-height: 1.15; letter-spacing: -.015em; }
+    h3 { font-size: 22px; font-weight: 600; }
+
+    .muted { color: var(--slate-4); }
+    .lead { font-size: 18px; color: var(--slate-3); line-height: 1.65; }
+
+    /* gradient accents */
+    .grad-indigo { background: linear-gradient(135deg, var(--indigo-l), var(--sky)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .grad-emerald { background: linear-gradient(135deg, var(--emerald), var(--sky)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* ─── SLIDE 1: Title ────────────────────────────────────────────── */
+    #s1 {
+      background: radial-gradient(ellipse at 20% 40%, rgba(99,102,241,.18) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 70%, rgba(56,189,248,.12) 0%, transparent 55%),
+                  var(--bg);
+      text-align: center;
+      gap: 24px;
+    }
+    #s1 .plane { font-size: 72px; }
+    #s1 h1 { max-width: 700px; }
+    #s1 .tagline { font-size: 20px; color: var(--slate-4); max-width: 520px; line-height: 1.6; }
+    .badge-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+
+    /* ─── SLIDE 2: Problem ──────────────────────────────────────────── */
+    #s2 { gap: 40px; }
+    #s2 .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .problem-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .problem-card .icon { font-size: 36px; margin-bottom: 14px; }
+    .problem-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .problem-card p { font-size: 14px; color: var(--slate-4); line-height: 1.6; }
+
+    /* ─── SLIDE 3: Solution ─────────────────────────────────────────── */
+    #s3 {
+      gap: 36px;
+      background: radial-gradient(ellipse at 70% 30%, rgba(52,211,153,.1) 0%, transparent 55%), var(--bg);
+    }
+    #s3 .solution-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .feature-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .fi-indigo  { background: rgba(99,102,241,.2); }
+    .fi-emerald { background: rgba(52,211,153,.15); }
+    .fi-amber   { background: rgba(251,191,36,.15); }
+    .fi-sky     { background: rgba(56,189,248,.15); }
+    .feature-item .text h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .feature-item .text p  { font-size: 13px; color: var(--slate-4); line-height: 1.55; }
+
+    /* ─── SLIDE 4: Architecture ─────────────────────────────────────── */
+    #s4 { gap: 36px; }
+    .arch-diagram {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 860px;
+    }
+    .arch-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      width: 100%;
+    }
+    .arch-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      text-align: center;
+      min-width: 140px;
+    }
+    .arch-box .ab-icon { font-size: 24px; margin-bottom: 6px; }
+    .arch-box .ab-title { font-size: 13px; font-weight: 600; }
+    .arch-box .ab-sub   { font-size: 11px; color: var(--slate-5); margin-top: 2px; }
+    .arch-box.highlight { border-color: var(--indigo); background: rgba(99,102,241,.12); }
+    .arch-box.highlight2 { border-color: var(--emerald); background: rgba(52,211,153,.08); }
+
+    .arch-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .arch-arrow .line { width: 2px; height: 22px; background: var(--border); }
+    .arch-arrow .tip  { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--border); }
+
+    .arch-personas {
+      display: flex;
+      gap: 10px;
+    }
+    .arch-tool {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      text-align: center;
+      font-size: 12px;
+    }
+    .arch-tool .t-icon { font-size: 18px; }
+    .arch-tool .t-name { font-size: 11px; color: var(--slate-4); margin-top: 2px; }
+
+    /* ─── SLIDE 5: User Flow ────────────────────────────────────────── */
+    #s5 { gap: 36px; }
+    .flow-steps {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      width: 100%;
+      max-width: 900px;
+    }
+    .flow-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0 12px;
+    }
+    .flow-num {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--indigo);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .flow-connector {
+      flex: 0 0 40px;
+      height: 2px;
+      background: var(--border);
+      margin-top: 20px;
+    }
+    .flow-icon { font-size: 28px; margin-bottom: 10px; }
+    .flow-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .flow-desc  { font-size: 12px; color: var(--slate-4); line-height: 1.55; }
+
+    .flow-detail-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .flow-detail {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .flow-detail h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .flow-detail ul { padding-left: 16px; }
+    .flow-detail ul li { font-size: 12px; color: var(--slate-4); line-height: 1.7; }
+
+    /* ─── SLIDE 6: AI Agents ────────────────────────────────────────── */
+    #s6 { gap: 32px; }
+    .agents-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 920px;
+    }
+    .agent-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 24px;
+    }
+    .agent-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .agent-card .tag { font-size: 11px; color: var(--indigo-l); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 10px; }
+    .agent-card p { font-size: 13px; color: var(--slate-4); line-height: 1.6; margin-bottom: 12px; }
+    .agent-card ul { padding-left: 16px; }
+    .agent-card ul li { font-size: 13px; color: var(--slate-3); line-height: 1.65; }
+
+    .persona-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .persona-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .persona-icon { font-size: 22px; }
+    .persona-name { font-size: 14px; font-weight: 600; }
+    .persona-desc { font-size: 12px; color: var(--slate-4); }
+
+    /* ─── SLIDE 7: Tech Stack ───────────────────────────────────────── */
+    #s7 { gap: 36px; }
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .tech-category {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 22px;
+    }
+    .tech-category .cat-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tech-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .tech-item:last-child { margin-bottom: 0; }
+    .tech-item .ti-icon { font-size: 20px; }
+    .tech-item .ti-name { font-size: 13px; font-weight: 600; }
+    .tech-item .ti-role { font-size: 11px; color: var(--slate-5); }
+
+    /* ─── SLIDE 8: Key Highlights ───────────────────────────────────── */
+    #s8 { gap: 36px; background: radial-gradient(ellipse at 30% 70%, rgba(99,102,241,.12) 0%, transparent 55%), var(--bg); }
+    .highlights-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .highlight-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+    .highlight-card .h-icon { font-size: 32px; margin-bottom: 12px; }
+    .highlight-card .h-val  { font-size: 28px; font-weight: 800; color: var(--indigo-l); margin-bottom: 6px; }
+    .highlight-card .h-label { font-size: 13px; color: var(--slate-4); line-height: 1.5; }
+
+    .highlights-detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .hd-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .hd-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+    .hd-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .hd-desc  { font-size: 13px; color: var(--slate-4); line-height: 1.55; }
+
+    /* ─── SLIDE 9: Future Roadmap ───────────────────────────────────── */
+    #s9 { gap: 36px; }
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .roadmap-phase {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 22px;
+    }
+    .roadmap-phase .phase-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .roadmap-phase h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .roadmap-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .roadmap-item:last-child { margin-bottom: 0; }
+    .ri-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+    .ri-text { font-size: 13px; color: var(--slate-3); line-height: 1.5; }
+
+    /* ─── SLIDE 10: Closing ─────────────────────────────────────────── */
+    #s10 {
+      gap: 28px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(99,102,241,.2) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(56,189,248,.12) 0%, transparent 50%),
+                  var(--bg);
+      text-align: center;
+    }
+    #s10 h1 { font-size: 48px; }
+    #s10 .closing-badges { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+    #s10 .repo-link {
+      font-size: 13px;
+      color: var(--slate-5);
+      margin-top: 8px;
+    }
+    #s10 .cta-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .cta-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 28px;
+      text-align: center;
+    }
+    .cta-box .cta-icon { font-size: 28px; margin-bottom: 8px; }
+    .cta-box .cta-label { font-size: 14px; font-weight: 600; }
+    .cta-box .cta-sub   { font-size: 12px; color: var(--slate-5); margin-top: 2px; }
+
+    /* ─── Keyboard hint ─────────────────────────────────────────────── */
+    #hint {
+      position: fixed;
+      bottom: 72px;
+      right: 28px;
+      font-size: 11px;
+      color: var(--slate-5);
+    }
+  </style>
+</head>
+<body>
+
+<div id="dots"></div>
+
+<div id="deck">
+
+  <!-- ── Slide 1: Title ── -->
+  <section class="slide" id="s1">
+    <div class="plane">✈️</div>
+    <h1>Layover <span class="grad-indigo">Planner</span></h1>
+    <p class="tagline">AI-powered itineraries that help travelers make the most of every layover — from 2 hours to a full day.</p>
+    <div class="badge-row">
+      <span class="chip chip-indigo">🤖 Multi-Agent AI</span>
+      <span class="chip chip-sky">🗺️ Google Maps API</span>
+      <span class="chip chip-emerald">⚡ Real-time Streaming</span>
+      <span class="chip chip-amber">🎭 5 Traveler Personas</span>
+    </div>
+  </section>
+
+  <!-- ── Slide 2: Problem ── -->
+  <section class="slide" id="s2">
+    <div>
+      <div class="section-title">The Problem</div>
+      <h2>Layovers are <span class="grad-indigo">wasted time</span></h2>
+      <p class="lead" style="margin-top:10px; max-width:600px;">
+        Millions of travelers sit in airports not knowing they could be exploring a new city — safely and efficiently.
+      </p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="icon">😰</div>
+        <h3>Analysis Paralysis</h3>
+        <p>Researching what to do, how to get there, and whether you'll make it back in time is overwhelming and stressful.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">⏳</div>
+        <h3>Time Uncertainty</h3>
+        <p>Travelers don't know how to account for transit time, departure buffer, and activity duration all at once.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">🌍</div>
+        <h3>No Personalization</h3>
+        <p>Generic travel guides aren't tailored to your specific interests, budget, or the few hours you actually have.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Slide 3: Solution ── -->
+  <section class="slide" id="s3">
+    <div>
+      <div class="section-title">The Solution</div>
+      <h2>One input. A complete <span class="grad-emerald">itinerary</span>.</h2>
+      <p class="lead" style="margin-top:10px; max-width:640px;">
+        Layover Planner combines Claude AI agents with real-time Google Maps data to generate a safe, personalized city plan in seconds.
+      </p>
+    </div>
+    <div class="solution-body">
+      <div class="feature-item">
+        <div class="feature-icon fi-indigo">🤖</div>
+        <div class="text">
+          <h4>Multi-Agent Orchestration</h4>
+          <p>A parent orchestrator delegates to specialist persona agents — each using live Maps data to surface the best options.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon fi-emerald">⏱️</div>
+        <div class="text">
+          <h4>Smart Time Budgeting</h4>
+          <p>Automatically applies a 90-minute departure buffer and calculates round-trip transit time for every activity.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon fi-sky">🗺️</div>
+        <div class="text">
+          <h4>Real Places, Real Hours</h4>
+          <p>Searches live Google Maps data to verify venues are open, within budget, and reachable in your time window.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon fi-amber">🎭</div>
+        <div class="text">
+          <h4>Persona-Based Planning</h4>
+          <p>Choose from Foodie, Hiker, Culture, Shopper, or Relaxer — or mix multiple interests for a blended itinerary.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Slide 4: Architecture ── -->
+  <section class="slide" id="s4">
+    <div>
+      <div class="section-title">System Architecture</div>
+      <h2>How the <span class="grad-indigo">pieces fit together</span></h2>
+    </div>
+    <div class="arch-diagram">
+      <!-- Top: User -->
+      <div class="arch-row">
+        <div class="arch-box highlight2">
+          <div class="ab-icon">🖥️</div>
+          <div class="ab-title">Next.js Web UI</div>
+          <div class="ab-sub">React + Tailwind CSS</div>
+        </div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="tip"></div></div>
+      <!-- API Layer -->
+      <div class="arch-row">
+        <div class="arch-box">
+          <div class="ab-icon">🔀</div>
+          <div class="ab-title">Next.js API Route</div>
+          <div class="ab-sub">SSE streaming · /api/plan</div>
+        </div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="tip"></div></div>
+      <!-- Orchestrator -->
+      <div class="arch-row">
+        <div class="arch-box highlight" style="min-width:200px;">
+          <div class="ab-icon">🧠</div>
+          <div class="ab-title">Orchestrator Agent</div>
+          <div class="ab-sub">Claude claude-opus-4-6 · Synthesizes itinerary</div>
+        </div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="tip"></div></div>
+      <!-- Persona Agents -->
+      <div class="arch-row">
+        <div class="arch-personas">
+          <div class="arch-tool"><div class="t-icon">🍜</div><div class="t-name">Foodie</div></div>
+          <div class="arch-tool"><div class="t-icon">🥾</div><div class="t-name">Hiker</div></div>
+          <div class="arch-tool"><div class="t-icon">🏛️</div><div class="t-name">Culture</div></div>
+          <div class="arch-tool"><div class="t-icon">🛍️</div><div class="t-name">Shopper</div></div>
+          <div class="arch-tool"><div class="t-icon">🧘</div><div class="t-name">Relaxer</div></div>
+        </div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="tip"></div></div>
+      <!-- Maps MCP -->
+      <div class="arch-row">
+        <div class="arch-box highlight2">
+          <div class="ab-icon">🗺️</div>
+          <div class="ab-title">Maps MCP Server</div>
+          <div class="ab-sub">Google Maps Places API · FastMCP</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Slide 5: User Flow ── -->
+  <section class="slide" id="s5">
+    <div>
+      <div class="section-title">User Experience</div>
+      <h2>From <span class="grad-indigo">input to itinerary</span> in seconds</h2>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-icon">📋</div>
+        <div class="flow-title">Enter Details</div>
+        <div class="flow-desc">City, airport code, arrival &amp; departure times, budget, and interests</div>
+      </div>
+      <div class="flow-connector"></div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-icon">🤖</div>
+        <div class="flow-title">AI Agents Run</div>
+        <div class="flow-desc">Persona specialists search Maps, verify travel times, check hours</div>
+      </div>
+      <div class="flow-connector"></div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-icon">🧠</div>
+        <div class="flow-title">Synthesized</div>
+        <div class="flow-desc">Orchestrator sequences activities to minimize backtracking</div>
+      </div>
+      <div class="flow-connector"></div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-icon">🗓️</div>
+        <div class="flow-title">Your Plan</div>
+        <div class="flow-desc">Time-ordered itinerary with addresses, ratings &amp; budget estimates</div>
+      </div>
+    </div>
+    <div class="flow-detail-row">
+      <div class="flow-detail">
+        <h4>⏱️ Time Safety Rules</h4>
+        <ul>
+          <li>90-min departure buffer enforced</li>
+          <li>Round-trip transit calculated</li>
+          <li>No overlapping slots</li>
+          <li>Short layovers → terminal only</li>
+        </ul>
+      </div>
+      <div class="flow-detail">
+        <h4>💰 Budget Intelligence</h4>
+        <ul>
+          <li>Low · Mid · Premium tiers</li>
+          <li>Mapped to Google price levels</li>
+          <li>Per-slot &amp; total estimates</li>
+          <li>Free activities always shown</li>
+        </ul>
+      </div>
+      <div class="flow-detail">
+        <h4>🔴 Live Data Checks</h4>
+        <ul>
+          <li>Open during visit window</li>
+          <li>Star ratings surfaced</li>
+          <li>Distance from airport</li>
+          <li>Transit / driving options</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Slide 6: AI Agents Deep Dive ── -->
+  <section class="slide" id="s6">
+    <div>
+      <div class="section-title">AI Agent Design</div>
+      <h2>Orchestrator + <span class="grad-indigo">Persona Specialists</span></h2>
+    </div>
+    <div class="agents-layout">
+      <!-- Left: Agent cards -->
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="agent-card">
+          <div class="tag">🧠 Parent Agent</div>
+          <h3>Orchestrator</h3>
+          <p>Receives the full user context and decides which persona tools to invoke. After collecting all specialist recommendations, it synthesizes a conflict-free, time-ordered JSON itinerary.</p>
+          <ul>
+            <li>Up to 20 agentic turns</li>
+            <li>Handles persona tool calls</li>
+            <li>Enforces time &amp; budget rules</li>
+            <li>Outputs structured Pydantic model</li>
+          </ul>
+        </div>
+        <div class="agent-card">
+          <div class="tag">🔧 Sub-Agents</div>
+          <h3>Persona Specialists</h3>
+          <p>Each specialist receives a focused prompt and accesses 4 Maps MCP tools to find real, open, budget-appropriate venues near the airport.</p>
+          <ul>
+            <li>Up to 15 agentic turns each</li>
+            <li>Search → Verify → Filter → Rank</li>
+            <li>Return structured JSON arrays</li>
+          </ul>
+        </div>
+      </div>
+      <!-- Right: Persona list -->
+      <div class="persona-list">
+        <div class="persona-row">
+          <div class="persona-icon">🍜</div>
+          <div>
+            <div class="persona-name">Foodie</div>
+            <div class="persona-desc">Restaurants, markets, local cuisine</div>
+          </div>
+        </div>
+        <div class="persona-row">
+          <div class="persona-icon">🥾</div>
+          <div>
+            <div class="persona-name">Outdoor Explorer</div>
+            <div class="persona-desc">Parks, trails, nature, scenic spots</div>
+          </div>
+        </div>
+        <div class="persona-row">
+          <div class="persona-icon">🏛️</div>
+          <div>
+            <div class="persona-name">Culture Seeker</div>
+            <div class="persona-desc">Museums, galleries, landmarks</div>
+          </div>
+        </div>
+        <div class="persona-row">
+          <div class="persona-icon">🛍️</div>
+          <div>
+            <div class="persona-name">Shopper</div>
+            <div class="persona-desc">Markets, malls, boutiques</div>
+          </div>
+        </div>
+        <div class="persona-row">
+          <div class="persona-icon">🧘</div>
+          <div>
+            <div class="persona-name">Relaxation Seeker</div>
+            <div class="persona-desc">Spas, lounges, wellness centers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Slide 7: Tech Stack ── -->
+  <section class="slide" id="s7">
+    <div>
+      <div class="section-title">Technology Stack</div>
+      <h2>Built on <span class="grad-indigo">modern foundations</span></h2>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-category">
+        <div class="cat-title" style="color: var(--indigo-l);">🖥️ Frontend</div>
+        <div class="tech-item">
+          <div class="ti-icon">⚛️</div>
+          <div><div class="ti-name">Next.js 15 + React 19</div><div class="ti-role">App Router, SSE streaming</div></div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-icon">🎨</div>
+          <div><div class="ti-name">Tailwind CSS</div><div class="ti-role">Dark-mode utility UI</div></div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-icon">📘</div>
+          <div><div class="ti-name">TypeScript</div><div class="ti-role">End-to-end type safety</div></div>
+        </div>
+      </div>
+      <div class="tech-category">
+        <div class="cat-title" style="color: var(--emerald);">🐍 Backend / AI</div>
+        <div class="tech-item">
+          <div class="ti-icon">🤖</div>
+          <div><div class="ti-name">Anthropic SDK</div><div class="ti-role">Claude claude-opus-4-6 · Tool use</div></div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-icon">🔌</div>
+          <div><div class="ti-name">FastMCP</div><div class="ti-role">Maps MCP server (stdio)</div></div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-icon">🐍</div>
+          <div><div class="ti-name">Python + Pydantic</div><div class="ti-role">Orchestrator &amp; models</div></div>
+        </div>
+      </div>
+      <div class="tech-category">
+        <div class="cat-title" style="color: var(--sky);">🌐 External APIs</div>
+        <div class="tech-item">
+          <div class="ti-icon">🗺️</div>
+          <div><div class="ti-name">Google Maps Places</div><div class="ti-role">Nearby search, details</div></div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-icon">📍</div>
+          <div><div class="ti-name">Distance Matrix API</div><div class="ti-role">Transit / driving times</div></div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-icon">🔑</div>
+          <div><div class="ti-name">Geocoding API</div><div class="ti-role">Airport IATA → coordinates</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Slide 8: Highlights ── -->
+  <section class="slide" id="s8">
+    <div>
+      <div class="section-title">Key Highlights</div>
+      <h2>What makes it <span class="grad-indigo">stand out</span></h2>
+    </div>
+    <div class="highlights-grid">
+      <div class="highlight-card">
+        <div class="h-icon">🎭</div>
+        <div class="h-val">5</div>
+        <div class="h-label">Traveler Personas — mix &amp; match any combination</div>
+      </div>
+      <div class="highlight-card">
+        <div class="h-icon">🤖</div>
+        <div class="h-val">2-tier</div>
+        <div class="h-label">AI Agent hierarchy — orchestrator + specialists</div>
+      </div>
+      <div class="highlight-card">
+        <div class="h-icon">⚡</div>
+        <div class="h-val">SSE</div>
+        <div class="h-label">Real-time progress streaming to the browser</div>
+      </div>
+      <div class="highlight-card">
+        <div class="h-icon">🔒</div>
+        <div class="h-val">90 min</div>
+        <div class="h-label">Hard departure buffer — you will never miss your flight</div>
+      </div>
+    </div>
+    <div class="highlights-detail">
+      <div class="hd-item">
+        <div class="hd-icon">🖥️ + 🐍</div>
+        <div>
+          <div class="hd-title">Dual Interface</div>
+          <div class="hd-desc">Full-featured Next.js web app for consumers plus a rich CLI (<code>main.py</code>) for developers and power users — both driven by the same Python orchestrator.</div>
+        </div>
+      </div>
+      <div class="hd-item">
+        <div class="hd-icon">🧩</div>
+        <div>
+          <div class="hd-title">Modular Persona System</div>
+          <div class="hd-desc">Each persona is a self-contained Python module with its own prompt template, activity descriptions, and recommendation count — easy to add new travel styles.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Slide 9: Roadmap ── -->
+  <section class="slide" id="s9">
+    <div>
+      <div class="section-title">Future Roadmap</div>
+      <h2>Where we're <span class="grad-indigo">headed next</span></h2>
+    </div>
+    <div class="roadmap-grid">
+      <div class="roadmap-phase">
+        <div class="phase-label" style="color: var(--emerald);">Phase 1 — Near Term</div>
+        <h3>Enhance Core</h3>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--emerald)"></div><div class="ri-text">Flight-aware scheduling (live flight data)</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--emerald)"></div><div class="ri-text">Visa &amp; entry requirement checks</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--emerald)"></div><div class="ri-text">Weather-aware activity suggestions</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--emerald)"></div><div class="ri-text">Saved itinerary history</div></div>
+      </div>
+      <div class="roadmap-phase">
+        <div class="phase-label" style="color: var(--indigo-l);">Phase 2 — Mid Term</div>
+        <h3>Expand Platform</h3>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--indigo-l)"></div><div class="ri-text">Mobile app (React Native)</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--indigo-l)"></div><div class="ri-text">Offline map caching</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--indigo-l)"></div><div class="ri-text">Group layover planning</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--indigo-l)"></div><div class="ri-text">Multi-language support</div></div>
+      </div>
+      <div class="roadmap-phase">
+        <div class="phase-label" style="color: var(--amber);">Phase 3 — Long Term</div>
+        <h3>Intelligence Layer</h3>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--amber)"></div><div class="ri-text">Learning from user ratings</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--amber)"></div><div class="ri-text">Community-curated hidden gems</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--amber)"></div><div class="ri-text">Airline partnership integrations</div></div>
+        <div class="roadmap-item"><div class="ri-dot" style="background:var(--amber)"></div><div class="ri-text">Booking deep-links</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Slide 10: Closing ── -->
+  <section class="slide" id="s10">
+    <div class="plane" style="font-size:64px;">✈️</div>
+    <h1>Every layover is a <span class="grad-indigo">hidden adventure</span></h1>
+    <p class="tagline" style="font-size:18px; color:var(--slate-4); max-width:560px; margin-top:4px;">
+      Layover Planner turns wasted airport hours into memorable city experiences — powered by AI, grounded in real data.
+    </p>
+    <div class="closing-badges">
+      <span class="chip chip-indigo">🤖 Claude claude-opus-4-6</span>
+      <span class="chip chip-sky">🗺️ Google Maps</span>
+      <span class="chip chip-emerald">⚡ Next.js + Python</span>
+      <span class="chip chip-amber">🎭 5 Personas</span>
+    </div>
+    <div class="cta-row">
+      <div class="cta-box">
+        <div class="cta-icon">🚀</div>
+        <div class="cta-label">Try It Live</div>
+        <div class="cta-sub">npm run dev</div>
+      </div>
+      <div class="cta-box">
+        <div class="cta-icon">💻</div>
+        <div class="cta-label">CLI Mode</div>
+        <div class="cta-sub">python main.py</div>
+      </div>
+      <div class="cta-box">
+        <div class="cta-icon">📖</div>
+        <div class="cta-label">GitHub</div>
+        <div class="cta-sub">saumild/layover-planner</div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<div id="nav">
+  <button class="nav-btn" id="prev">← Prev</button>
+  <span id="counter"></span>
+  <button class="nav-btn" id="next">Next →</button>
+</div>
+
+<div id="hint">← → arrow keys to navigate</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsEl  = document.getElementById('dots');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+  const counter = document.getElementById('counter');
+  let current = 0;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    if (n < 0 || n >= slides.length) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit');
+    setTimeout(() => slides[current - (current > n ? -1 : 1) + (current > n ? 1 : -1)]?.classList.remove('exit'), 500);
+    // simpler: just remove exit after transition
+    const prev = current;
+    current = n;
+    setTimeout(() => slides[prev].classList.remove('exit'), 500);
+    slides[current].classList.add('active');
+
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    counter.textContent = `${current + 1} / ${slides.length}`;
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+  }
+
+  // Init
+  slides[0].classList.add('active');
+  counter.textContent = `1 / ${slides.length}`;
+  prevBtn.disabled = true;
+
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  nextBtn.addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') goTo(current + 1);
+    if (e.key === 'ArrowLeft')  goTo(current - 1);
+  });
+</script>
+</body>
+</html>
